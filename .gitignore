@@ -40,3 +40,6 @@ graphs/*_compress_pareto_history.html
 # Lake build
 /.lake
 /.direnv
+
+# Python bytecode
+__pycache__/

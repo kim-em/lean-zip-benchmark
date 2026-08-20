@@ -27,7 +27,7 @@ Two modes:
   result via a running checksum (through the `noinline` `sink`), so no decode is
   dead-code eliminated. Wall-clock therefore scales linearly with `reps`.
 
-See `bench/README.md` § *Profiling the decoder* for the `perf` recipe and the
+See `README.md` § *Profiling the decoder* for the `perf` recipe and the
 same-worktree A/B rule.
 -/
 

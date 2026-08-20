@@ -4,17 +4,17 @@
 #
 # Advisory only: always exits 0. Prints a warning at PR-review time if
 # the resolved `miniz_oxide` / `adler2` versions in
-# bench/rust/miniz_oxide_shim/Cargo.lock have drifted from the snapshot
-# audited in SECURITY_INVENTORY.md § "miniz_oxide via Rust" (the
+# rust/miniz_oxide_shim/Cargo.lock have drifted from the snapshot
+# audited in SECURITY.md § "miniz_oxide via Rust" (the
 # *"`Cargo.lock` is tracked and treated as security-critical"* bullet
 # under *Current local guardrails*).
 #
 # Drift does not mean "broken"; it means "re-read the *Why trusted*
 # paragraph for `miniz_oxide via Rust`, decide whether the new resolved
 # versions are acceptable, and update the *Snapshot as of …* line in
-# SECURITY_INVENTORY.md to match (or roll back the lockfile change)."
+# SECURITY.md to match (or roll back the lockfile change)."
 #
-# Run before opening a PR that touches `bench/rust/miniz_oxide_shim/`.
+# Run before opening a PR that touches `rust/miniz_oxide_shim/`.
 #
 # This is a trip wire, not a fence. It is not wired into CI — the goal
 # is to make accidental Cargo.lock churn visible in a `git diff`, not
@@ -27,7 +27,7 @@
 #
 # Manual smoke tests:
 #   1. Drift detection: temporarily edit the *Snapshot as of …* line in
-#      SECURITY_INVENTORY.md to mention an obviously wrong version
+#      SECURITY.md to mention an obviously wrong version
 #      (e.g. `miniz_oxide` 9.9.9), re-run this script, expect a single
 #      DRIFT WARNING block followed by exit 0, then revert the edit.
 #   2. Parser-mismatch diagnostic: temporarily replace the single space
@@ -38,8 +38,8 @@
 
 set -u
 
-LOCK="bench/rust/miniz_oxide_shim/Cargo.lock"
-INVENTORY="SECURITY_INVENTORY.md"
+LOCK="rust/miniz_oxide_shim/Cargo.lock"
+INVENTORY="SECURITY.md"
 
 if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
     cat <<EOF
@@ -94,8 +94,8 @@ if [ -z "$snap_line" ]; then
     exit 0
 fi
 
-expected_miniz=$(printf '%s\n' "$snap_line" | sed -nE 's/.*\`miniz_oxide\` ([0-9]+\.[0-9]+\.[0-9]+).*/\1/p')
-expected_adler=$(printf '%s\n' "$snap_line" | sed -nE 's/.*\`adler2\` ([0-9]+\.[0-9]+\.[0-9]+).*/\1/p')
+expected_miniz=$(printf '%s\n' "$snap_line" | sed -nE 's/.*`miniz_oxide` ([0-9]+\.[0-9]+\.[0-9]+).*/\1/p')
+expected_adler=$(printf '%s\n' "$snap_line" | sed -nE 's/.*`adler2` ([0-9]+\.[0-9]+\.[0-9]+).*/\1/p')
 
 # Surface parser failure as an explicit diagnostic instead of letting it
 # masquerade as a real version drift with blank `expected:` fields. The

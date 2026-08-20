@@ -226,7 +226,7 @@ where
       pure ()
     | "compress-miniz" =>
       -- Print the compressed size (mirrors the `csize` one-line format) so the
-      -- whole-tar measurement (bench/whole_tar_l6.sh) can read miniz's output
+      -- whole-tar measurement (whole_tar_l6.sh) can read miniz's output
       -- size while still timing this as a fresh single-shot process. This feeds
       -- the CODEC section of that measurement: run THROUGH this same lean `bench`
       -- harness, this path pays the identical `readBinFile` + big-ByteArray I/O

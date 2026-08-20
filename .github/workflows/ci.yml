@@ -41,6 +41,46 @@ jobs:
       - name: Test
         run: lake -R test
 
+  build-and-test-miniz:
+    # Same suite with a Rust toolchain: the miniz_oxide shim builds for real
+    # and its conformance/fuzz tests exercise the actual Rust codec instead
+    # of the stub (mirrors the pre-split bench CI job). Guard against a
+    # silent fall-back to the stub before running the tests.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y zlib1g-dev pkg-config cargo
+
+      - name: Install elan
+        run: |
+          curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Cache Lake build
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: .lake
+          key: lake-miniz-${{ hashFiles('lean-toolchain', 'lakefile.lean', 'lake-manifest.json', '**/*.lean', 'c/**', 'rust/**') }}
+          restore-keys: lake-miniz-
+
+      - name: Clean stale Lake cache on fallback restore
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: rm -rf .lake
+
+      - name: Build
+        run: lake -R build
+
+      - name: Require the real miniz_oxide shim (not the stub)
+        run: |
+          ls rust/miniz_oxide_shim/target/release/libminiz_oxide_shim.a
+          bash scripts/check-cargo-lock.sh
+
+      - name: Test
+        run: lake -R test
+
   python-tests:
     # Timing-protocol, merge-provenance, and frontier-math unittests for the
     # measurement/plotting pipeline.

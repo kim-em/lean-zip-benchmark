@@ -6,8 +6,9 @@ DEFLATE implementation in Lean 4. Extracted from that repository's
 `bench/` sub-package at its
 [`pre-split`](https://github.com/kim-em/lean-zip/tree/pre-split) tag.
 
-> **Frozen dashboard.** The committed graphs and results reflect the
-> final August 2026 dashboard refresh of the optimization campaign; the
+> **Frozen dashboard.** The committed graphs and results reflect the final
+> dashboard refresh of the optimization campaign (last measurement
+> 2026-07-27; frozen at the August 2026 repository split); the
 > pareto-history animation replays the pre-split lean-zip git history
 > and is kept as a committed artifact. The harness still runs and can
 > measure new lean-zip revisions, but the history replay
@@ -27,8 +28,15 @@ level. The graphs are regenerated from committed data by the workflow below.
 ```
 run.sh                 # measure, render static SVGs + untracked animation previews
 # commit the refreshed JSON and static SVGs
-run.sh --history-only  # render tracked animations from that committed history
+run.sh --history-only  # render animations from this repo's committed history
 ```
+
+> **Do not regenerate the imported history animations.** The committed
+> `graphs/*_compress_pareto_history*.svg` replay the pre-split lean-zip git
+> history (48 dashboard refreshes) and cannot be reproduced from this
+> repository's fresh history — `run.sh --history-only` here would overwrite
+> them with a one-frame animation. They are frozen artifacts; if the harness
+> is ever revived, write new history animations under a new filename.
 
 That runs [`lake exe bench-report`](ZipBenchReport.lean) (writes
 [`results/latest.json`](results/latest.json) and dumps the exact payloads), then
@@ -50,7 +58,9 @@ same protocol; exploratory single-shot timings are useful for tuning, but are
 not dashboard evidence.
 
 For a long native before/after audit, use [`paired_native.py`](paired_native.py)
-instead of running the two revisions as separate sweeps. It runs each matching
+instead of running the two revisions as separate sweeps. Its two roots are
+lean-zip-benchmark worktrees, each with the lake manifest pinned to the
+lean-zip revision under audit and `bench-report` already built. It runs each matching
 file/level cell adjacently on one pinned CPU, keeps median-of-5 within each cell,
 and checkerboards before-first/after-first order across files and levels. Before
 measuring, it asks both binaries for their timing policy and requires exactly
@@ -88,12 +98,12 @@ fingerprinted benchmark-interface backport while keeping compressor sources at
 the named commit, and that dirty state must remain visible rather than being
 described as a clean checkout.
 
-Commit the JSON and static SVGs, then run `run.sh --history-only` and
-commit the two tracked history SVGs in a separate commit. Do not amend the data
-commit afterward: its SHA, date, and subject are embedded in the animation
-frame. For the same reason, merge a dashboard-refresh PR with a **merge
-commit**, never squash or rebase it; either history-rewriting method changes
-the embedded commit identity after CI runs.
+(Historical protocol, applicable only if the frozen dashboard is ever
+revived under new animation filenames:) commit the JSON and static SVGs,
+then render the history animation and commit it separately. Do not amend
+the data commit afterward: its SHA, date, and subject are embedded in the
+animation frame, so dashboard-refresh PRs merged with a merge commit,
+never squash or rebase.
 
 > **Benchmark machine: chungus2 (since 2026-07-05).** The canonical machine moved
 > from `chungus` to `chungus2`. The two are indistinguishable on throughput —
@@ -451,10 +461,17 @@ best-of-5 sweep gives end-to-end decode rates directly. Because all modes live i
 one binary, an A/B across `decode` / `decode-fast` / `decode-fast-u` is strictly
 more layout-comparable than the two-worktree rule above — no separate builds.
 Build with libdeflate enabled (`nix-shell` already lists it) for `compress` /
-`decode-ld`: `LIBDEFLATE_LDFLAGS=-ldeflate lake -R -d bench build inflate-profile`.
+`decode-ld`: `LIBDEFLATE_LDFLAGS=-ldeflate lake -R build inflate-profile`.
 The #2799 verdict from this A/B is recorded in `plans/track-d-state.md` at the pre-split tag.
 
-## What the current snapshot shows
+## What the starting baseline showed
+
+*(Historical: this section describes the **first** dashboard snapshot, before
+the optimization campaign — it is the "before" picture that drove the backlog.
+The final frozen dashboard above tells the "after" story: on the last refresh,
+native Canterbury L6 reaches ratio 0.299 (geomean over 11 files) with ~37 MB/s compress and
+~280 MB/s decompress, and the lean-zip README summarizes the endgame
+comparisons.)*
 
 > On real data (Canterbury, level 6, geomean over 11 files) native is the
 > **worst real codec on all three axes** — ratio 0.323 (zlib 0.299), compress

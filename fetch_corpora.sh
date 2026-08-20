@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Materialize the standard compression corpora used by the Track D dashboard
+# Materialize the standard compression corpora used by the dashboard
 # into corpora/<name>/, verified against recorded SHA-256 checksums.
 #
 #   fetch_corpora.sh [canterbury]   # default: all known corpora
@@ -7,7 +7,7 @@
 # Canterbury (~2.8 MB, 11 files) is committed to the repo, so CI needs no
 # network; running this script is only needed to re-materialize or update it.
 # Larger corpora (e.g. Silesia) are NOT committed and are fetched on demand
-# into this gitignored cache — see .gitignore. Sources (PLAN.md §D):
+# into this gitignored cache — see .gitignore. Sources:
 #   Canterbury: https://corpus.canterbury.ac.nz/
 set -euo pipefail
 cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"

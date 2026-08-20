@@ -3,8 +3,8 @@
 # sanitize-rust-ffi.sh -- build and run the lean-zip miniz_oxide
 # Rust shim under ASan.  [Skeleton; recipe body is TODO.]
 #
-# Scope: bench/c/miniz_oxide_ffi.c + libminiz_oxide_shim.a
-# (bench/rust/miniz_oxide_shim/) only.  This is a *sibling* recipe to
+# Scope: c/miniz_oxide_ffi.c + libminiz_oxide_shim.a
+# (rust/miniz_oxide_shim/) only.  This is a *sibling* recipe to
 # scripts/sanitize-ffi.sh (which targets c/zlib_ffi.c) -- the two
 # scripts are intentionally split because their toolchain
 # requirements differ:
@@ -38,7 +38,7 @@
 # is tracked as a follow-up issue, gated on a Linux + nightly-Rust
 # worker host.
 #
-# See also: SECURITY_INVENTORY.md `miniz_oxide via Rust` ->
+# See also: SECURITY.md `miniz_oxide via Rust` ->
 # *Missing work* bullet 1, and the precedent recipe shape in
 # scripts/sanitize-ffi.sh.
 
@@ -49,7 +49,7 @@ usage() {
 Usage: scripts/sanitize-rust-ffi.sh [--help]
 
 Build and run the miniz_oxide Rust shim + its C-ABI shim
-(bench/rust/miniz_oxide_shim/ + bench/c/miniz_oxide_ffi.c) under ASan.
+(rust/miniz_oxide_shim/ + c/miniz_oxide_ffi.c) under ASan.
 
 [Skeleton.] This script is structurally complete but the recipe
 body is currently TODO.  The environment guard (nightly Rust on
@@ -60,16 +60,16 @@ misleading "pass".
 
 Intended recipe shape (filled in by a follow-up issue):
 
-  1. cargo +nightly build --release in bench/rust/miniz_oxide_shim/
+  1. cargo +nightly build --release in rust/miniz_oxide_shim/
      with `RUSTFLAGS="-Zsanitizer=address"`.
   2. Surface the instrumented `libminiz_oxide_shim.a` via
-     MINIZ_OXIDE_LDFLAGS so bench/lakefile.lean's
+     MINIZ_OXIDE_LDFLAGS so lakefile.lean's
      miniz_oxide-detection picks it up at link time.
   3. lake -d bench -R build (`-R` re-elaborates the package
      configuration so the new MINIZ_OXIDE_LDFLAGS is re-read
      instead of the compiled-config cache).
   4. Run a small Lean driver that exercises the smoke-test
-     inputs from bench/BenchTests/MinizOxide.lean (miniz<->miniz,
+     inputs from BenchTests/MinizOxide.lean (miniz<->miniz,
      miniz->zlib, zlib->miniz, level-0 stored, empty input,
      maxDecompressedSize cap) under
      ASAN_OPTIONS="abort_on_error=1:detect_leaks=0".
@@ -161,7 +161,7 @@ echo "[sanitize-rust-ffi] nightly cargo available: $(cargo +nightly --version)"
 echo "error: sanitize-rust-ffi.sh recipe body is TODO." >&2
 echo "       This skeleton only validates that nightly Rust is" >&2
 echo "       available; the actual ASan build + run is deferred to" >&2
-echo "       a sibling follow-up issue.  See SECURITY_INVENTORY.md" >&2
+echo "       a sibling follow-up issue.  See SECURITY.md" >&2
 echo "       'miniz_oxide via Rust' -> 'Missing work' bullet 1 for" >&2
 echo "       the current state." >&2
 exit 1

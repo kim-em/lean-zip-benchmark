@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Cell-interleaved native benchmark comparison.
 
-Run the ``bench-report --native-cell`` binaries from two worktrees immediately
+Run the ``bench-report --native-cell`` binaries from two lean-zip-benchmark
+worktrees (each with its lake manifest pinned to the lean-zip revision under
+audit, and ``lake build bench-report`` already run) immediately
 next to each other for every corpus-file/level cell.  The checkerboard order
 balances before-first and after-first cells while every row keeps the binary's
 reported median-of-5 dashboard policy.  An atomic checkpoint records enough
@@ -170,7 +172,7 @@ def atomic_json(path: Path, value: object) -> None:
 
 
 def corpus_files(root: Path) -> dict[str, Path]:
-    corpora = root / "bench" / "corpora"
+    corpora = root / "corpora"
     found: dict[str, Path] = {}
     for corpus in sorted(corpora.iterdir(), key=lambda path: path.name):
         if not corpus.is_dir():
@@ -279,7 +281,7 @@ def link_search_directories(root: Path, link_flags: list[str]) -> list[Path]:
             candidates = [root / value.removeprefix("<ROOT>/")]
         else:
             path = Path(value)
-            candidates = [path] if path.is_absolute() else [root / "bench" / path, root / path]
+            candidates = [path] if path.is_absolute() else [root / path]
         directory = next((path.resolve() for path in candidates if path.is_dir()), None)
         if directory is not None and directory not in directories:
             directories.append(directory)
@@ -320,7 +322,7 @@ def relevant_link_input_hashes(root: Path, link_flags: list[str]) -> dict[str, s
 
 
 def branch_info(root: Path) -> dict[str, object]:
-    binary = root / "bench" / ".lake" / "build" / "bin" / "bench-report"
+    binary = root / ".lake" / "build" / "bin" / "bench-report"
     response = binary.with_suffix(".rsp")
     if not binary.is_file():
         raise RuntimeError(f"missing benchmark binary: {binary}")

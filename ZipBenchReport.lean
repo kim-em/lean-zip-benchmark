@@ -10,15 +10,15 @@ Runs the full compress/decompress matrix — native lean-zip vs each reference
 implementation — over the **real compression corpora** (Canterbury, Silesia, …)
 across every DEFLATE level, measuring **compression ratio** (deterministic) and
 **throughput** (median-of-5 MB/s), and emits a JSON document consumed by
-`bench/plot.py` to render the SVG dashboard.
+`plot.py` to render the SVG dashboard.
 
 Synthetic data is gone: the pseudo-prose pattern was pathologically
 compressible (200:1) and its decode read ~3800 MB/s versus ~106 MB/s on real
 prose in the *same* run, so it misled on every axis. Only the committed corpora
-are timed now (see `bench/corpora/`).
+are timed now (see `corpora/`).
 
 Usage:
-  lake exe bench-report [output.json]      # default: bench/results/latest.json
+  lake exe bench-report [output.json]      # default: results/latest.json
   lake exe bench-report --levels output.json 1,2
                                           # matched all-engine level subset
   lake exe bench-report --native-cell canterbury/alice29.txt 1
@@ -32,14 +32,14 @@ dashboard.
 
 /-! ## Real corpora (committed corpus cache)
 
-Each subdirectory of `bench/corpora/` is a corpus, and every file inside it is a
+Each subdirectory of `corpora/` is a corpus, and every file inside it is a
 single-size workload tagged `<corpus>/<file>`. The Canterbury corpus (11 files,
-~2.8 MB) is committed (materialized by `bench/fetch_corpora.sh`, verified against
+~2.8 MB) is committed (materialized by `fetch_corpora.sh`, verified against
 recorded SHA-256), so it runs at every level on every regeneration with no
 network. New corpora (e.g. Silesia) are discovered automatically once their
 files land — nothing here hard-codes Canterbury. -/
 
-def corporaDir : String := "bench/corpora"
+def corporaDir : String := "corpora"
 
 /-- Discover every committed corpus under `corporaDir`. Returns one
     `(corpus, workloads)` entry per subdirectory, where each workload is
@@ -49,7 +49,7 @@ def corporaDir : String := "bench/corpora"
 def loadCorpora : IO (List (String × List (String × ByteArray))) := do
   let root := System.FilePath.mk corporaDir
   unless ← root.pathExists do
-    IO.eprintln s!"  no corpora dir (run bench/fetch_corpora.sh): {root}"
+    IO.eprintln s!"  no corpora dir (run fetch_corpora.sh): {root}"
     return []
   let entries ← root.readDir
   let dirs := (entries.map (·.path)).qsort (fun a b => a.toString < b.toString)
@@ -304,7 +304,9 @@ def runReport (outPath : String) (nativeOnly : Bool := false)
   -- representative data.
   let corpora ← loadCorpora
   if corpora.isEmpty then
-    IO.eprintln "  no corpora found — run bench/fetch_corpora.sh"
+    -- A report with zero rows is worse than no report: it would silently
+    -- replace real dashboard data. Fail loudly instead.
+    throw (IO.userError "no corpora found — run fetch_corpora.sh first")
   let mut rows : List Row := []
   for (corpus, files) in corpora do
     -- Every corpus uses the same median-of-5 timing policy at every level. A
@@ -325,7 +327,7 @@ def runReport (outPath : String) (nativeOnly : Bool := false)
     let cn ← runWorkloads timing "native"      files nativeCompress     (some nativeDecompress)     (theLevels := nlvls)
     -- `--native-only`: skip the reference compressors. Their ratios are
     -- deterministic, so a Lean-only change may reuse the prior dashboard's
-    -- reference rows (spliced in post-hoc by bench/run.sh) instead of paying to
+    -- reference rows (spliced in post-hoc by run.sh) instead of paying to
     -- re-measure them. Their MB/s remains tied to its original session;
     -- mixed-session speed gaps are not matched comparisons.
     if nativeOnly then
@@ -368,14 +370,16 @@ def runReport (outPath : String) (nativeOnly : Bool := false)
     level-less, and ~100× slower than zlib (default iteration count), so it is
     deliberately NOT part of the routine `runReport` matrix. This writes a FROZEN
     snapshot of the best-achievable ratio per file; the dashboard overlays it
-    (see `bench/plot.py`) without ever recomputing it. Do not regenerate unless
-    the corpora themselves change — see `bench/README.md`. -/
+    (see `plot.py`) without ever recomputing it. Do not regenerate unless
+    the corpora themselves change — see `README.md`. -/
 def runZopfliCeiling (outPath : String) : IO Unit := do
   let timing := Bench.singleRepArtifactTiming
   IO.eprintln "Running ONE-TIME zopfli ratio ceiling over all corpora (slow — frozen artifact)…"
   let corpora ← loadCorpora
   if corpora.isEmpty then
-    IO.eprintln "  no corpora found — run bench/fetch_corpora.sh"
+    -- A report with zero rows is worse than no report: it would silently
+    -- replace real dashboard data. Fail loudly instead.
+    throw (IO.userError "no corpora found — run fetch_corpora.sh first")
   let mut rows : List Row := []
   for (corpus, files) in corpora do
     IO.eprintln s!"  zopfli {corpus} ({files.length} files)…"
@@ -402,7 +406,7 @@ def runZopfliCeiling (outPath : String) : IO Unit := do
     "compress-only, level-less and ~100x slower than zlib; level=6 is nominal and " ++
     "compress_mbps is a single-rep artifact, not a benchmark. ratio/out_size are " ++
     "deterministic. Regenerate only if the corpora change: lake env " ++
-    ".lake/build/bin/bench-report --zopfli-ceiling bench/results/zopfli-ceiling.json\"\n" ++
+    ".lake/build/bin/bench-report --zopfli-ceiling results/zopfli-ceiling.json\"\n" ++
     "  },\n" ++
     "  \"results\": [\n" ++ body ++ "\n  ]\n}\n"
   if let some parent := (System.FilePath.mk outPath).parent then
@@ -484,7 +488,7 @@ the densest realistic streams, level range 1–12) and decode the identical stre
 with every decoder, plus a `memcpy` ceiling (the bandwidth bound on emitting the
 output bytes). The in-process decoders (native/zlib/miniz/libdeflate) are timed
 here; the external comparators decode the dumped streams via their `decode` mode
-(see `bench/decode_density.py`). Output rows reuse the `Row` schema with
+(see `decode_density.py`). Output rows reuse the `Row` schema with
 `compressor` holding the *decoder* name and `ratio` holding libdeflate's
 compression ratio (the x-axis). -/
 
@@ -634,4 +638,4 @@ def main (args : List String) : IO Unit := do
     -- every reference codec (for example, L1 frontier work versus miniz_oxide).
     let lvls ← parseLevelCsv "all-engine" lvlCsv levels
     runReport out (levelOverride := some lvls)
-  | _ => runReport (args.head?.getD "bench/results/latest.json")
+  | _ => runReport (args.head?.getD "results/latest.json")

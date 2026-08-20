@@ -128,9 +128,9 @@ override the link flags, and otherwise auto-detect cargo on `PATH`. -/
 
     `moreLinkArgs`' `run_io` runs against the *invocation* CWD, which differs
     by how the bench package is driven: `cd bench && lake …` runs with CWD at
-    `bench/` (so the crate is `rust/miniz_oxide_shim`), while `lake -d bench …`
+    the repo root (so the crate is `rust/miniz_oxide_shim`), while `lake -d <dir> …`
     from the repo root leaves CWD there (so the crate is
-    `bench/rust/miniz_oxide_shim`). `-d` sets the package dir but does not
+    elsewhere (legacy `bench/rust/miniz_oxide_shim` probe kept). `-d` sets the package dir but does not
     chdir. Probe both so every invocation pattern finds the crate. -/
 def minizShimDir : IO FilePath := do
   let candidates : Array FilePath :=
@@ -347,14 +347,14 @@ lean_exe «bench-report» where
   root := `ZipBenchReport
 
 -- Single-decoder inflate profiling driver: `decode` mode runs native inflate
--- alone, so a `perf record` of that process attributes cleanly (see bench/README.md).
+-- alone, so a `perf record` of that process attributes cleanly (see README.md).
 @[default_target]
 lean_exe «inflate-profile» where
   root := `ZipInflateProfile
 
 -- Honest lean side of the end-to-end CLI comparison: read a file, raw-DEFLATE
 -- compress it, print the compressed size. Timed head-to-head against the rust
--- `miniz-compress-file` bin by bench/whole_tar_l6.sh (`end_to_end` section).
+-- `miniz-compress-file` bin by whole_tar_l6.sh (`end_to_end` section).
 @[default_target]
 lean_exe «compress-file» where
   root := `ZipCompressFile
