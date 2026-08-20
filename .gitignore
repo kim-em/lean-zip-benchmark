@@ -10,6 +10,7 @@ payloads-deflate/
 # committed so CI needs no network; larger corpora (e.g. Silesia) are fetched on
 # demand and stay untracked.
 corpora/*
+!corpora/LICENSES.md
 !corpora/canterbury/
 
 # Hidden before/after snapshot graphs from the perf-comparison workflow. Only the
