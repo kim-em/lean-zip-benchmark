@@ -253,9 +253,9 @@ def ltoLinkFlags : IO (Array String) := do
 package «lean-zip-bench» where
   moreLinkArgs := run_io do return (← linkFlags) ++ (← ltoLinkFlags)
 
-require «lean-zip» from git "https://github.com/kim-em/lean-zip" @ "86fde8b18886f97d2c77dab2ba6d033bbbdfbb3a"
+require «lean-zip» from git "https://github.com/kim-em/lean-zip" @ "f844fe0cf171ea5698d1b0bf948c7da5fa550c42"
 
-require «lean-zlib» from git "https://github.com/kim-em/lean-zlib" @ "1a79d2d7713e55d98084f4ed92fd44263aab133c"
+require «lean-zlib» from git "https://github.com/kim-em/lean-zlib" @ "b6590763445d7a2365b44698c7c9d7d94aa35455"
 
 -- Comparator FFI bindings (out of the `Zip.` namespace — `Zip` belongs to the
 -- required parent library).
